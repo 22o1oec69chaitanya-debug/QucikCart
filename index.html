@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Quickcart</title>
+    <link rel="stylesheet" href="./style.css">
+
+  </head>
+    
+  <body>
+  <div id="mainApp" class="app-view active">
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-content">
+        <h1 class="app-logo">🛒 QuickCart</h1>
+        <p class="app-tagline">Modern Supermarket Checkout</p>
+      </div>
+      <div class="header-buttons">
+        <button class="btn-switch" onclick="switchToAdmin()">
+          👨‍💼 Admin
+        </button>
+        <button class="btn-switch" onclick="switchToSecurity()">
+          🛡️ Security
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="scan-section">
+        <div class="section-card">
+          <h2 class="section-title">Scan Barcode</h2>
+          <p class="section-subtitle">Point your camera at the product barcode</p>
+
+          <button class="btn btn-primary btn-camera" onclick="openCameraScanner()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            Open Camera Scanner
+          </button>
+
+          <div class="divider">
+            <span>OR</span>
+          </div>
+
+          <div class="barcode-input-group">
+            <input 
+              type="text" 
+              id="barcodeInput" 
+              class="barcode-input" 
+              placeholder="Enter barcode manually"
+              onkeypress="if(event.key==='Enter') scanBarcode()"
+            />
+            <button class="btn btn-secondary" onclick="scanBarcode()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="quick-scan-section">
+            <p class="quick-scan-label">Quick Test:</p>
+            <div class="quick-scan-buttons">
+              <button class="btn btn-quick" onclick="quickScan('8901234567890')">Maggi</button>
+              <button class="btn btn-quick" onclick="quickScan('8901234567891')">Coke</button>
+              <button class="btn btn-quick" onclick="quickScan('8901234567892')">Bread</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cart-section">
+        <div class="section-card">
+          <h2 class="section-title">Your Cart</h2>
+
+          <div id="emptyCart" class="empty-cart">
+            <div class="empty-cart-icon">🛒</div>
+            <p class="empty-cart-text">Your cart is empty.<br>Start scanning products!</p>
+          </div>
+
+          <div id="cartList" class="cart-list" style="display: none;"></div>
+
+          <div id="cartSummary" class="cart-summary" style="display: none;">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span id="subtotalAmount">₹0</span>
+            </div>
+            <div class="summary-row">
+              <span>GST Total:</span>
+              <span id="gstAmount">₹0</span>
+            </div>
+            <div class="summary-row summary-total">
+              <span>Grand Total:</span>
+              <span id="grandTotal">₹0</span>
+            </div>
+
+            <button class="btn btn-primary btn-checkout" onclick="openCheckout()">
+              Proceed to Checkout
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <div id="cameraModal" class="modal">
+      <div class="modal-content modal-camera-full">
+        <div class="camera-header">
+          <h3>📷 Scan Barcode</h3>
+          <button class="camera-close-btn" onclick="closeCameraScanner()">×</button>
+        </div>
+        
+        <div class="camera-viewport-container">
+          <div id="interactive" class="camera-viewport"></div>
+          <div class="scan-overlay">
+            <div class="scan-frame"></div>
+            <div class="scan-line"></div>
+          </div>
+          <div class="scan-instructions">
+            <p>Position barcode within the frame</p>
+            <p class="scan-hint">Make sure the barcode is clear and well-lit</p>
+          </div>
+        </div>
+        
+        <div class="camera-footer">
+          <button class="btn btn-secondary btn-full" onclick="closeCameraScanner()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="paymentModal" class="modal">
+      <div class="modal-content modal-payment">
+        <div class="modal-header">
+          <h3 id="paymentModalTitle">Select Payment Method</h3>
+          <button class="modal-close" onclick="closePaymentModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <p id="paymentModalMessage" class="modal-message"></p>
+          <div id="paymentModalContent" class="payment-content"></div>
+        </div>
+        <div id="paymentModalActions" class="modal-actions"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="securityApp" class="app-view">
+  <div class="security-container">
+    <header class="security-header">
+      <div class="header-content">
+        <h1 class="security-logo">🛡️ Security Portal</h1>
+        <p class="security-tagline">Exit Verification System</p>
+      </div>
+      <button class="btn-switch-security" onclick="switchToMain()">
+        🛒 Back to Checkout
+      </button>
+    </header>
+
+    <main class="security-main">
+      <section class="scanner-section">
+        <div class="scanner-card">
+          <h2 class="section-title">Scan Customer QR Code</h2>
+          <p class="section-subtitle">Scan the QR code shown by customer at checkout</p>
+
+          <button class="btn btn-primary btn-scan" onclick="openCameraScanner()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Scan QR Code
+          </button>
+
+          <div class="divider">
+            <span>OR</span>
+          </div>
+
+          <div class="manual-input-group">
+            <input 
+              type="text" 
+              id="transactionInput" 
+              class="transaction-input" 
+              placeholder="Enter Transaction ID manually"
+              onkeypress="if(event.key==='Enter') verifyTransaction()"
+            />
+            <button class="btn btn-secondary" onclick="verifyTransaction()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-value" id="verifiedCount">0</div>
+              <div class="stat-label">Verified Today</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⚠️</div>
+              <div class="stat-value" id="flaggedCount">0</div>
+              <div class="stat-label">Flagged</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="verification-section">
+        <div class="verification-card">
+          <h2 class="section-title">Verification Result</h2>
+
+          <div id="noVerification" class="no-verification">
+            <div class="no-verification-icon">🔍</div>
+            <p>No transaction scanned yet.<br>Scan a customer's QR code to verify.</p>
+          </div>
+
+          <div id="verificationResult" class="verification-result" style="display: none;"></div>
+        </div>
+
+        <div class="exit-log-card">
+          <div class="exit-log-header">
+            <h2 class="section-title">Exit Log</h2>
+            <button class="btn btn-small" onclick="refreshExitLog()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+          <div id="exitLog" class="exit-log"></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toastSecurity" class="toast"></div>
+
+    <div id="qrScannerModal" class="modal">
+      <div class="modal-content modal-scanner">
+        <div class="scanner-header">
+          <h3>📷 Scan QR Code</h3>
+          <button class="scanner-close-btn" onclick="closeQRScanner()">×</button>
+        </div>
+        
+        <div class="scanner-viewport-container">
+          <div id="qrReader" class="scanner-viewport"></div>
+          <div class="scanner-overlay">
+            <div class="scanner-frame-qr"></div>
+          </div>
+          <div class="scanner-instructions">
+            <p>Position QR code within the frame</p>
+          </div>
+        </div>
+        
+        <div class="scanner-footer">
+          <button class="btn btn-secondary btn-full" onclick="closeQRScanner()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="detailsModal" class="modal">
+      <div class="modal-content modal-details">
+        <div class="modal-header">
+          <h3 id="detailsModalTitle">Transaction Details</h3>
+          <button class="modal-close" onclick="closeDetailsModal()">×</button>
+        </div>
+        <div class="modal-body" id="detailsModalBody"></div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" onclick="closeDetailsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="adminApp" class="app-view">
+  <div class="admin-container">
+    <header class="admin-header">
+      <div class="header-content">
+        <h1 class="admin-logo">👨‍💼 Admin Dashboard</h1>
+        <p class="admin-tagline">Store Management System</p>
+      </div>
+      <button class="btn-switch-admin" onclick="switchToMain()">
+        🛒 Back to Checkout
+      </button>
+    </header>
+
+    <nav class="admin-nav">
+      <button class="nav-btn active" onclick="showAdminTab('overview')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Overview
+      </button>
+      <button class="nav-btn" onclick="showAdminTab('products')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 7h-9M14 17H5M6 3v4M10 17v4M12 3v14"/>
+        </svg>
+        Products
+      </button>
+      <button class="nav-btn" onclick="showAdminTab('transactions')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <line x1="2" y1="10" x2="22" y2="10"/>
+        </svg>
+        Transactions
+      </button>
+      <button class="nav-btn" onclick="showAdminTab('security')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Security
+      </button>
+    </nav>
+
+    <main class="admin-main">
+      <div id="adminOverview" class="admin-tab active">
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Total Revenue</span>
+              <span class="stat-icon">💰</span>
+            </div>
+            <div class="stat-value" id="totalRevenue">₹0</div>
+            <div class="stat-subtitle">All time</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Today's Sales</span>
+              <span class="stat-icon">📈</span>
+            </div>
+            <div class="stat-value" id="todaySales">₹0</div>
+            <div class="stat-subtitle" id="todayTransactions">0 transactions</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Total Products</span>
+              <span class="stat-icon">📦</span>
+            </div>
+            <div class="stat-value" id="totalProducts">0</div>
+            <div class="stat-subtitle">In inventory</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Exits Verified</span>
+              <span class="stat-icon">✅</span>
+            </div>
+            <div class="stat-value" id="totalExits">0</div>
+            <div class="stat-subtitle" id="flaggedExits">0 flagged</div>
+          </div>
+        </div>
+
+        <div class="admin-charts">
+          <div class="chart-card">
+            <h3>Recent Transactions</h3>
+            <div id="recentTransactionsList"></div>
+          </div>
+          <div class="chart-card">
+            <h3>Top Selling Products</h3>
+            <div id="topProductsList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="adminProducts" class="admin-tab">
+        <div class="tab-header">
+          <h2>Product Management</h2>
+          <button class="btn btn-primary" onclick="openAddProductModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Product
+          </button>
+        </div>
+        <div class="products-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Barcode</th>
+                <th>Name</th>
+                <th>Variant</th>
+                <th>Price</th>
+                <th>GST</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="adminTransactions" class="admin-tab">
+        <div class="tab-header">
+          <h2>Transaction History</h2>
+          <input type="text" id="transactionSearch" class="search-input" placeholder="Search by Transaction ID..." onkeyup="filterTransactions()">
+        </div>
+        <div class="transactions-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Date & Time</th>
+                <th>Items</th>
+                <th>Amount</th>
+                <th>Payment Method</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="adminSecurity" class="admin-tab">
+        <div class="tab-header">
+          <h2>Security Reports</h2>
+        </div>
+        <div class="security-stats-grid">
+          <div class="security-stat-card verified">
+            <div class="stat-icon-large">✅</div>
+            <div class="stat-value" id="adminVerifiedCount">0</div>
+            <div class="stat-label">Verified Exits</div>
+          </div>
+          <div class="security-stat-card flagged">
+            <div class="stat-icon-large">⚠️</div>
+            <div class="stat-value" id="adminFlaggedCount">0</div>
+            <div class="stat-label">Flagged Transactions</div>
+          </div>
+        </div>
+        <div class="exit-log-table-container">
+          <h3>Exit Log</h3>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Exit Time</th>
+                <th>Amount</th>
+                <th>Items</th>
+                <th>Status</th>
+                <th>Guard</th>
+              </tr>
+            </thead>
+            <tbody id="exitLogTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <div id="toastAdmin" class="toast"></div>
+
+    <div id="productModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="productModalTitle">Add Product</h3>
+          <button class="modal-close" onclick="closeProductModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <form id="productForm" onsubmit="saveProduct(event)">
+            <input type="hidden" id="productId">
+            <div class="form-group">
+              <label>Barcode *</label>
+              <input type="text" id="productBarcode" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label>Product Name *</label>
+              <input type="text" id="productName" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label>Variant *</label>
+              <input type="text" id="productVariant" class="form-input" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Price (₹) *</label>
+                <input type="number" id="productPrice" class="form-input" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label>GST Rate (%) *</label>
+                <input type="number" id="productGst" class="form-input" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Category *</label>
+                <input type="text" id="productCategory" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label>Stock *</label>
+                <input type="number" id="productStock" class="form-input" required>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Product</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="transactionDetailsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Transaction Details</h3>
+          <button class="modal-close" onclick="closeTransactionDetailsModal()">×</button>
+        </div>
+        <div class="modal-body" id="transactionDetailsBody"></div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" onclick="closeTransactionDetailsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script  src="./script.js"></script>
+
+  </body>
+  
+</html>
